@@ -3,11 +3,9 @@ import numpy as np
 import mediapipe as mp
 from tensorflow.keras.models import load_model
 
-# --- 1. Configuration and Setup ---
-MODEL_PATH = 'best_static_asl_model.h5'  # Make sure this file is in the same folder!
+MODEL_PATH = 'best_static_asl_model.h5'  
 ACTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
-# Load the trained DNN model
 try:
     model = load_model(MODEL_PATH)
     print(f"✅ Model '{MODEL_PATH}' loaded successfully.")
@@ -16,11 +14,9 @@ except Exception as e:
     print("Please check that 'best_static_asl_model.h5' is in the current directory.")
     exit()
 
-# MediaPipe Hands setup
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
-# --- 2. Keypoint Extraction Function ---
 def extract_keypoints(results):
     """Converts MediaPipe results into the 126-feature vector format expected by the DNN."""
     # Initialize with zeros for fixed 126 features (63 per hand)
@@ -36,16 +32,16 @@ def extract_keypoints(results):
 
             # Assign based on MediaPipe's label (Right means the signer's left hand)
             if handedness == 'Left':
-                # Signer's Right Hand is labeled 'Left' by MediaPipe
+
                 lh = keypoints
             elif handedness == 'Right':
-                # Signer's Left Hand is labeled 'Right' by MediaPipe
+               
                 rh = keypoints
                 
     # Concatenate to form the final 126-dimension input vector
     return np.concatenate([lh, rh])
 
-# --- 3. Webcam Initialization and Prediction Loop ---
+
 print("Starting webcam feed...")
 cap = cv2.VideoCapture(0)  # 0 is usually the default camera
 
@@ -95,8 +91,6 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) a
                 predicted_sign = ACTIONS[predicted_index]
                 confidence = res[predicted_index]
 
-        # --- Display Prediction on Screen ---
-        # Get coordinates for the prediction text box (top left corner)
         cv2.rectangle(image, (0, 0), (640, 40), (245, 117, 16), -1)
         
         display_text = f"Sign: {predicted_sign} | Conf: {confidence:.2f}"
@@ -110,7 +104,6 @@ with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) a
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
 
-# --- Cleanup ---
 cap.release()
 cv2.destroyAllWindows()
 print("Webcam closed and resources released.")
